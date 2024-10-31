@@ -33,11 +33,14 @@ void displayMenu(struct Employee *employees, int length);
 void displayEmployees(struct Employee *employees, int length);
 void addEmployee(struct Employee *employees, int length);
 int getEmployeeId();
+char *getEmployeeName();
 int employeeExists(struct Employee *employees, int length, int id);
-void displayEmployee(struct Employee *employees, int length, int id);
+void displayEmployeeByID(struct Employee *employees, int length, int id);
+void displayEmployeeByName(struct Employee *employees, int length, char *name);
 void clearEmployeeData(struct Employee *employee);
 void deleteEmployees(struct Employee *employees, int length);
-void deleteEmployee(struct Employee *employees, int length, int id);
+void deleteEmployeeByID(struct Employee *employees, int length, int id);
+void deleteEmployeeByName(struct Employee *employees, int length, char *name);
 void gotoxy(int column, int row); // Set cursor position
 void textattr(int i);             // Set text color
 
@@ -61,7 +64,7 @@ void textattr(int i)
 // Function to display the main menu
 void displayMenu(struct Employee *employees, int length)
 {
-    const char *menu[] = {"Add", "Display All", "Display By ID", "Delete All", "Delete By ID", "Exit"};
+    const char *menu[] = {"Add", "Display All", "Display By ID", "Display By Name", "Delete All", "Delete By ID", "Delete By Name", "Exit"};
     int inx = 0; // Index for the menu selection
     char ch;
 
@@ -74,7 +77,7 @@ void displayMenu(struct Employee *employees, int length)
         printf("----------------------------\n");
 
         // Display menu options
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 8; i++)
         {
             gotoxy(7, i * 2 + 3);
             textattr(i == inx ? 14 : 7); // Highlight selected option
@@ -86,10 +89,10 @@ void displayMenu(struct Employee *employees, int length)
         {
         case EXTENDED: // Handle special key inputs
             ch = getch();
-            inx = (ch == UP || ch == LEFT)      ? (inx == 0 ? 5 : inx - 1)
-                  : (ch == DOWN || ch == RIGHT) ? (inx + 1) % 6
+            inx = (ch == UP || ch == LEFT)      ? (inx == 0 ? 7 : inx - 1)
+                  : (ch == DOWN || ch == RIGHT) ? (inx + 1) % 8
                   : (ch == HOME)                ? 0
-                  : (ch == END)                 ? 5
+                  : (ch == END)                 ? 7
                                                 : inx;
 
             break;
@@ -97,6 +100,7 @@ void displayMenu(struct Employee *employees, int length)
         case ENTER:
             CLEAR;
             int id;
+            char *name;
             switch (inx)
             {
             case 0:
@@ -109,20 +113,32 @@ void displayMenu(struct Employee *employees, int length)
             case 2:
                 id = getEmployeeId();
                 CLEAR;
-                displayEmployee(employees, length, id);
+                displayEmployeeByID(employees, length, id);
                 getch();
                 break;
             case 3:
-                deleteEmployees(employees, length);
+                name = getEmployeeName();
+                displayEmployeeByName(employees, length, name);
+                free(name); // Free the allocated memory
                 getch();
                 break;
             case 4:
-                id = getEmployeeId();
-                CLEAR;
-                deleteEmployee(employees, length, id);
+                deleteEmployees(employees, length);
                 getch();
                 break;
             case 5:
+                id = getEmployeeId();
+                CLEAR;
+                deleteEmployeeByID(employees, length, id);
+                getch();
+                break;
+            case 6:
+                name = getEmployeeName();
+                deleteEmployeeByName(employees, length, name);
+                free(name); // Free the allocated memory
+                getch();
+                break;
+            case 7:
                 return; // Exit the program
             }
             break;
@@ -140,15 +156,20 @@ void displayMenu(struct Employee *employees, int length)
 void displayEmployees(struct Employee *employees, int length)
 {
     CLEAR;
-    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
-    printf("| Index   | ID    | Name              | Age | Salary       | Commission    | Deduction     | Net Salary     |\n");
-    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+    int count = 0;
 
     // Loop through employees and display their details
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id != 0)
         {
+            count++;
+            if (count == 1)
+            {
+                printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+                printf("| Index   | ID    | Name              | Age | Salary       | Commission    | Deduction     | Net Salary     |\n");
+                printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+            }
             // Only display employees with valid IDs
             float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
             printf("| %-7d | %-5d | %-17s | %-3d | %-12.2f | %-13.2f | %-13.2f | %-14.2f |\n",
@@ -157,7 +178,12 @@ void displayEmployees(struct Employee *employees, int length)
         }
     }
 
-    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+    if (count)
+    {
+        printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+    }
+    else
+        printf("There is no employees!");
 }
 
 // Function to get an employee ID from user input
@@ -168,6 +194,24 @@ int getEmployeeId()
     _flushall(); // Clear input buffer
     scanf("%d", &id);
     return id;
+}
+
+// Function to get an employee name from user input
+char *getEmployeeName()
+{
+    char *name = malloc(18 * sizeof(char)); // Allocate memory for name
+    if (name == NULL)
+    {
+        perror("Memory allocation failed");
+        exit(1);
+    }
+
+    printf("Choose Name: ");
+    fflush(stdin);
+    fgets(name, 18, stdin);           // Read input with size limit
+    name[strcspn(name, "\n")] = '\0'; // Remove trailing newline
+
+    return name;
 }
 
 int employeeExists(struct Employee *employees, int length, int id)
@@ -183,7 +227,7 @@ int employeeExists(struct Employee *employees, int length, int id)
 }
 
 // Function to display details of a specific employee by ID
-void displayEmployee(struct Employee *employees, int length, int id)
+void displayEmployeeByID(struct Employee *employees, int length, int id)
 {
     int index = employeeExists(employees, length, id); // Get the index of the employee
 
@@ -207,6 +251,33 @@ void displayEmployee(struct Employee *employees, int length, int id)
     else
     {
         printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+    }
+}
+
+// Function to display details of a specific employee by ID
+void displayEmployeeByName(struct Employee *employees, int length, char *name)
+{
+    int count = 0; // To count the number of matching employees
+
+    // Create a temporary array to store matching employees
+    struct Employee matchingEmployees[length];
+
+    for (int i = 0; i < length; i++)
+    {
+        if (strcmpi(employees[i].name, name) == 0)
+        {
+            matchingEmployees[count++] = employees[i];
+        }
+    }
+    if (!count)
+    {
+        CLEAR;
+        printf("There are no employees with this name!");
+    }
+    else
+    {
+        // Call the displayEmployees function with the filtered array
+        displayEmployees(matchingEmployees, count);
     }
 }
 
@@ -328,12 +399,26 @@ void deleteEmployees(struct Employee *employees, int length)
     scanf("%c", &choice);
     if (choice == 'y' || choice == 'Y')
     {
+        int count++;
         for (int i = 0; i < length; i++)
         {
-            clearEmployeeData(&employees[i]); // Clear each employee's data
+            if (employees[i] != 0)
+            {
+
+                clearEmployeeData(&employees[i]); // Clear each employee's data
+            }
+            else
+                count++;
         }
         CLEAR;
-        printf("All employee data deleted.\n");
+        if (!count)
+        {
+            printf("There is no employees!");
+        }
+        else
+        {
+            printf("All employee data deleted.");
+        }
     }
     else
     {
@@ -343,7 +428,7 @@ void deleteEmployees(struct Employee *employees, int length)
 }
 
 // Function to delete a specific employee by ID
-void deleteEmployee(struct Employee *employees, int length, int id)
+void deleteEmployeeByID(struct Employee *employees, int length, int id)
 {
     int index = employeeExists(employees, length, id); // Get the index of the employee
 
@@ -354,9 +439,27 @@ void deleteEmployee(struct Employee *employees, int length, int id)
         printf("Employee with ID %d deleted.\n", id);
     }
     else
-    {
         printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+}
+
+// Function to delete a specific employee by ID
+void deleteEmployeeByName(struct Employee *employees, int length, char *name)
+{
+    int count = 0; // To count the number of matching employees
+
+    for (int i = 0; i < length; i++)
+    {
+        if (strcmpi(employees[i].name, name) == 0)
+        {
+            count++;
+            clearEmployeeData(&employees[i]);
+        }
     }
+    CLEAR;
+    if (!count)
+        printf("There are no employees with this name!");
+    else
+        printf("%d employees deleted successfully!", count);
 }
 
 // Main Function
