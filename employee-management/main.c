@@ -140,9 +140,9 @@ void displayMenu(struct Employee *employees, int length)
 void displayEmployees(struct Employee *employees, int length)
 {
     CLEAR;
-    printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
-    printf("| Index   | ID    | Name             | Age | Salary       | Commission    | Deduction     | Net Salary     |\n");
-    printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
+    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+    printf("| Index   | ID    | Name              | Age | Salary       | Commission    | Deduction     | Net Salary     |\n");
+    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
 
     // Loop through employees and display their details
     for (int i = 0; i < length; i++)
@@ -151,13 +151,13 @@ void displayEmployees(struct Employee *employees, int length)
         {
             // Only display employees with valid IDs
             float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
-            printf("| %-7d | %-5d | %-16s | %-3d | %-12.2f | %-13.2f | %-13.2f | %-14.2f |\n",
+            printf("| %-7d | %-5d | %-17s | %-3d | %-12.2f | %-13.2f | %-13.2f | %-14.2f |\n",
                    i + 1, employees[i].id, employees[i].name, employees[i].age, employees[i].salary,
                    employees[i].commission, employees[i].deduction, netSalary);
         }
     }
 
-    printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
+    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
 }
 
 // Function to get an employee ID from user input
@@ -228,7 +228,7 @@ void addEmployee(struct Employee *employees, int length)
         char choice;
         printf("An employee already exists at this index. Replace? (y/n): ");
         fflush(stdin);
-        choice = getche();
+        scanf("%c", &choice);
         if (choice == 'n' || choice == 'N') // If user chooses not to replace, exit
             return;
     }
@@ -295,7 +295,9 @@ void addEmployee(struct Employee *employees, int length)
     // Get employee details from user input
     gotoxy(25, 8);
     fflush(stdin);
-    gets(employees[inx].name);
+    fgets(employees[inx].name, sizeof(employees[inx].name), stdin);
+    employees[inx].name[strcspn(employees[inx].name, "\n")] = 0; // Remove newline character
+    fflush(stdin);
     gotoxy(25, 10);
     scanf("%d", &employees[inx].age);
     gotoxy(25, 12);
