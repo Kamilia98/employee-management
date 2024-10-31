@@ -31,6 +31,7 @@ void displayMenu(struct Employee *employees, int length);
 void displayEmployees(struct Employee *employees, int length);
 void addEmployee(struct Employee *employees, int length);
 int getEmployeeId();
+int employeeExists(struct Employee *employees, int length, int id);
 void displayEmployee(struct Employee *employees, int length, int id);
 void clearEmployeeData(struct Employee *employee);
 void deleteEmployees(struct Employee *employees, int length);
@@ -205,7 +206,6 @@ void displayEmployee(struct Employee *employees, int length, int id)
     }
 }
 
-// Function to add an employee
 // Function to add a new employee
 void addEmployee(struct Employee *employees, int length)
 {
@@ -319,17 +319,19 @@ void deleteEmployees(struct Employee *employees, int length)
     char choice;
     printf("Delete all employees? (y/n): ");
     fflush(stdin);
-    choice = getche();
+    scanf("%c", &choice);
     if (choice == 'y' || choice == 'Y')
     {
         for (int i = 0; i < length; i++)
         {
             clearEmployeeData(&employees[i]); // Clear each employee's data
         }
+        CLEAR;
         printf("All employee data deleted.\n");
     }
     else
     {
+        CLEAR;
         printf("Deletion cancelled.\n");
     }
 }
