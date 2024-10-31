@@ -143,7 +143,8 @@ void displayEmployees(struct Employee *employees, int length)
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id != 0)
-        {                                                                                             // Only display employees with valid IDs
+        {
+            // Only display employees with valid IDs
             float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
             printf("| %-7d | %-5d | %-16s | %-3d | %-12.2f | %-13.2f | %-13.2f | %-14.2f |\n",
                    i + 1, employees[i].id, employees[i].name, employees[i].age, employees[i].salary,
@@ -164,34 +165,48 @@ int getEmployeeId()
     return id;
 }
 
-// Function to display details of a specific employee by ID
-void displayEmployee(struct Employee *employees, int length, int id)
+int employeeExists(struct Employee *employees, int length, int id)
 {
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id == id)
-        { // Check if employee ID matches
-            CLEAR;
-            float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
-            printf("+-------------+--------------------+\n");
-            printf("| Field       | Value              |\n");
-            printf("+-------------+--------------------+\n");
-            printf("| Index       | %-18d |\n", i + 1);
-            printf("| ID          | %-18d |\n", employees[i].id);
-            printf("| Name        | %-18s |\n", employees[i].name);
-            printf("| Age         | %-18d |\n", employees[i].age);
-            printf("| Salary      | %-18.2f |\n", employees[i].salary);
-            printf("| Commission  | %-18.2f |\n", employees[i].commission);
-            printf("| Deduction   | %-18.2f |\n", employees[i].deduction);
-            printf("| Net Salary  | %-18.2f |\n", netSalary);
-            printf("+-------------+--------------------+\n");
-            return; // Exit after displaying employee details
+        {
+            return i; // Return the employee if found
         }
     }
-    printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+    return -1;
+}
+
+// Function to display details of a specific employee by ID
+void displayEmployee(struct Employee *employees, int length, int id)
+{
+    int index = employeeExists(employees, length, id); // Get the index of the employee
+
+    if (index != -1) // Check if the employee exists
+    {
+        CLEAR;
+        struct Employee e = employees[index];                    // Access the employee using the index
+        float netSalary = e.salary + e.commission - e.deduction; // Calculate net salary
+        printf("+-------------+--------------------+\n");
+        printf("| Field       | Value              |\n");
+        printf("+-------------+--------------------+\n");
+        printf("| ID          | %-18d |\n", e.id);
+        printf("| Name        | %-18s |\n", e.name);
+        printf("| Age         | %-18d |\n", e.age);
+        printf("| Salary      | %-18.2f |\n", e.salary);
+        printf("| Commission  | %-18.2f |\n", e.commission);
+        printf("| Deduction   | %-18.2f |\n", e.deduction);
+        printf("| Net Salary  | %-18.2f |\n", netSalary);
+        printf("+-------------+--------------------+\n");
+    }
+    else
+    {
+        printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+    }
 }
 
 // Function to add an employee
+// Function to add a new employee
 void addEmployee(struct Employee *employees, int length)
 {
     int inx;
@@ -200,7 +215,7 @@ void addEmployee(struct Employee *employees, int length)
         printf("Choose an index (1-%d): ", length);
         scanf("%d", &inx);
     } while (inx < 1 || inx > length); // Validate index input
-    inx -= 1; // Adjust index for zero-based array
+    inx--; // Adjust index for zero-based array
 
     // Check if an employee already exists at the index
     if (employees[inx].id != 0)
@@ -215,19 +230,14 @@ void addEmployee(struct Employee *employees, int length)
     }
 
     CLEAR;
-    gotoxy(12, 2);
+    gotoxy(18, 2);
     printf("=== Enter Employee Details ===");
 
     // Display input fields for employee details
     gotoxy(10, 4);
-    printf("+-------------------------------+");
-    for (int i = 5; i <= 17; i++)
-    {
-        gotoxy(10, i);
-        printf("|                               |");
-    }
+    printf("+----------------------------------------+");
     gotoxy(10, 18);
-    printf("+-------------------------------+");
+    printf("+----------------------------------------+");
 
     // Prompt for employee details
     gotoxy(12, 6);
@@ -243,13 +253,45 @@ void addEmployee(struct Employee *employees, int length)
     gotoxy(12, 16);
     printf("Deduction:");
 
+    // Get employee ID from user input and check for uniqueness
+    int employeeID;
+
+    // Loop until a valid unique ID is entered
+    do
+    {
+        // Prompt user for the employee ID
+        gotoxy(25, 6);
+        scanf("%d", &employeeID); // Use & to store input in the variable
+
+        // Check if the entered ID already exists (not the same employee)
+        if (employeeExists(employees, length, employeeID) != -1 &&
+            employeeExists(employees, length, employeeID) != inx)
+        {
+            gotoxy(12, 7);
+            // Inform the user that the ID already exists
+            printf("ID %d already exists. Please enter a unique ID.\n", employeeID);
+
+            // Clear the ID input
+            gotoxy(25, 6);
+            printf("                    "); // Clear the input line by overwriting it with spaces
+
+            // Optionally, provide additional instructions or leave the cursor at the same position
+        }
+        else
+        {
+            // If the ID is unique or the same as the current employee's ID, assign it
+            employees[inx].id = employeeID;
+            gotoxy(12, 7);
+            // clear error message if exists
+            printf("                                              ");
+            break; // Exit the loop after a valid ID is entered
+        }
+    } while (1); // Keep looping until a valid unique ID is provided
+
     // Get employee details from user input
-    gotoxy(25, 6);
-    scanf("%d", &employees[inx].id);
     gotoxy(25, 8);
     fflush(stdin);
-    fgets(employees[inx].name, sizeof(employees[inx].name), stdin);
-    employees[inx].name[strcspn(employees[inx].name, "\n")] = 0; // Remove newline character
+    gets(employees[inx].name);
     gotoxy(25, 10);
     scanf("%d", &employees[inx].age);
     gotoxy(25, 12);
@@ -295,16 +337,18 @@ void deleteEmployees(struct Employee *employees, int length)
 // Function to delete a specific employee by ID
 void deleteEmployee(struct Employee *employees, int length, int id)
 {
-    for (int i = 0; i < length; i++)
+    int index = employeeExists(employees, length, id); // Get the index of the employee
+
+    if (index != -1) // Check if the employee exists
     {
-        if (employees[i].id == id)
-        {                                     // Check for matching ID
-            clearEmployeeData(&employees[i]); // Clear employee data
-            printf("Employee with ID %d deleted.\n", id);
-            return; // Exit after deletion
-        }
+        // Clear employee data
+        clearEmployeeData(&employees[index]); // Clear the employee data
+        printf("Employee with ID %d deleted.\n", id);
     }
-    printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+    else
+    {
+        printf("Employee with ID %d not found.\n", id); // Error message if ID not found
+    }
 }
 
 // Main Function
