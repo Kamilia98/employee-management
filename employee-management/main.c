@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <conio.h>
 
-// Constants
+// Constants for keyboard input
 #define EXTENDED -32
 #define ENTER 13
 #define ESC 27
@@ -13,32 +13,34 @@
 #define HOME 71
 #define DOWN 80
 #define END 79
-#define CLEAR system("cls")
+#define CLEAR system("cls") // Macro to clear the console screen
 
 // Struct Definitions
 struct Employee
 {
-    int id;
-    char name[18];
-    int age;
-    float salary;
-    float commission;
-    float deduction;
+    int id;           // Employee ID
+    char name[18];    // Employee name
+    int age;          // Employee age
+    float salary;     // Employee salary
+    float commission; // Employee commission
+    float deduction;  // Employee deduction
 };
 
 // Function Prototypes
-void displayMenu(struct Employee *employees, int);
-void displayEmployees(struct Employee *employees, int);
-void addEmployee(struct Employee *employees, int);
+void displayMenu(struct Employee *employees, int length);
+void displayEmployees(struct Employee *employees, int length);
+void addEmployee(struct Employee *employees, int length);
 int getEmployeeId();
-void displayEmployee(struct Employee *employees, int, int);
+void displayEmployee(struct Employee *employees, int length, int id);
 void clearEmployeeData(struct Employee *employee);
-void deleteEmployees(struct Employee *employees, int);
-void deleteEmployee(struct Employee *employees, int, int);
-void gotoxy(int column, int row);
-void textattr(int i);
+void deleteEmployees(struct Employee *employees, int length);
+void deleteEmployee(struct Employee *employees, int length, int id);
+void gotoxy(int column, int row); // Set cursor position
+void textattr(int i);             // Set text color
 
 // Function Implementations
+
+// Function to set the cursor position in the console
 void gotoxy(int column, int row)
 {
     COORD coord;
@@ -47,36 +49,39 @@ void gotoxy(int column, int row)
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
+// Function to set the text color in the console
 void textattr(int i)
 {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), i);
 }
 
+// Function to display the main menu
 void displayMenu(struct Employee *employees, int length)
 {
     const char *menu[] = {"Add", "Display All", "Display By ID", "Delete All", "Delete By ID", "Exit"};
-    int inx = 0;
+    int inx = 0; // Index for the menu selection
     char ch;
 
     do
     {
-        CLEAR;
+        CLEAR; // Clear the console
         textattr(7);
         printf("----------------------------\n");
         printf("          MAIN MENU         \n");
         printf("----------------------------\n");
 
+        // Display menu options
         for (int i = 0; i < 6; i++)
         {
             gotoxy(7, i * 2 + 3);
-            textattr(i == inx ? 14 : 7);
+            textattr(i == inx ? 14 : 7); // Highlight selected option
             printf("%s %s", (i == inx) ? ">>" : "   ", menu[i]);
         }
 
-        ch = getche();
+        ch = getche(); // Get user input
         switch (ch)
         {
-        case EXTENDED:
+        case EXTENDED: // Handle special key inputs
             ch = getch();
             inx = (ch == UP) ? (inx == 0 ? 5 : inx - 1) : (ch == DOWN) ? (inx + 1) % 6
                                                       : (ch == HOME)   ? 0
@@ -113,31 +118,33 @@ void displayMenu(struct Employee *employees, int length)
                 getch();
                 break;
             case 5:
-                return;
+                return; // Exit the program
             }
             break;
 
         case ESC:
-            return;
+            return; // Exit on ESC key
         case TAB:
-            inx = (inx + 1) % 6;
+            inx = (inx + 1) % 6; // Cycle through menu options
             break;
         }
     } while (1);
 }
 
+// Function to display all employees
 void displayEmployees(struct Employee *employees, int length)
 {
     CLEAR;
     printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
     printf("| Index   | ID    | Name             | Age | Salary       | Commission    | Deduction     | Net Salary     |\n");
-    printf("+---------+-------+-------------------+-----+--------------+---------------+---------------+----------------+\n");
+    printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
 
+    // Loop through employees and display their details
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id != 0)
-        {
-            float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction;
+        {                                                                                             // Only display employees with valid IDs
+            float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
             printf("| %-7d | %-5d | %-16s | %-3d | %-12.2f | %-13.2f | %-13.2f | %-14.2f |\n",
                    i + 1, employees[i].id, employees[i].name, employees[i].age, employees[i].salary,
                    employees[i].commission, employees[i].deduction, netSalary);
@@ -147,24 +154,25 @@ void displayEmployees(struct Employee *employees, int length)
     printf("+---------+-------+------------------+-----+--------------+---------------+---------------+----------------+\n");
 }
 
+// Function to get an employee ID from user input
 int getEmployeeId()
 {
     int id;
-    printf("Choose id: ");
-    _flushall();
+    printf("Choose ID: ");
+    _flushall(); // Clear input buffer
     scanf("%d", &id);
     return id;
 }
 
+// Function to display details of a specific employee by ID
 void displayEmployee(struct Employee *employees, int length, int id)
 {
-
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id == id)
-        {
+        { // Check if employee ID matches
             CLEAR;
-            float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction;
+            float netSalary = employees[i].salary + employees[i].commission - employees[i].deduction; // Calculate net salary
             printf("+-------------+--------------------+\n");
             printf("| Field       | Value              |\n");
             printf("+-------------+--------------------+\n");
@@ -177,12 +185,13 @@ void displayEmployee(struct Employee *employees, int length, int id)
             printf("| Deduction   | %-18.2f |\n", employees[i].deduction);
             printf("| Net Salary  | %-18.2f |\n", netSalary);
             printf("+-------------+--------------------+\n");
-            return;
+            return; // Exit after displaying employee details
         }
     }
-    printf("Employee with ID %d not found.\n", id);
+    printf("Employee with ID %d not found.\n", id); // Error message if ID not found
 }
 
+// Function to add an employee
 void addEmployee(struct Employee *employees, int length)
 {
     int inx;
@@ -190,9 +199,10 @@ void addEmployee(struct Employee *employees, int length)
     {
         printf("Choose an index (1-%d): ", length);
         scanf("%d", &inx);
-    } while (inx < 1 || inx > length);
-    inx -= 1;
+    } while (inx < 1 || inx > length); // Validate index input
+    inx -= 1; // Adjust index for zero-based array
 
+    // Check if an employee already exists at the index
     if (employees[inx].id != 0)
     {
         CLEAR;
@@ -200,7 +210,7 @@ void addEmployee(struct Employee *employees, int length)
         printf("An employee already exists at this index. Replace? (y/n): ");
         fflush(stdin);
         choice = getche();
-        if (choice == 'n' || choice == 'N')
+        if (choice == 'n' || choice == 'N') // If user chooses not to replace, exit
             return;
     }
 
@@ -208,6 +218,7 @@ void addEmployee(struct Employee *employees, int length)
     gotoxy(12, 2);
     printf("=== Enter Employee Details ===");
 
+    // Display input fields for employee details
     gotoxy(10, 4);
     printf("+-------------------------------+");
     for (int i = 5; i <= 17; i++)
@@ -218,6 +229,7 @@ void addEmployee(struct Employee *employees, int length)
     gotoxy(10, 18);
     printf("+-------------------------------+");
 
+    // Prompt for employee details
     gotoxy(12, 6);
     printf("ID:");
     gotoxy(12, 8);
@@ -231,12 +243,13 @@ void addEmployee(struct Employee *employees, int length)
     gotoxy(12, 16);
     printf("Deduction:");
 
+    // Get employee details from user input
     gotoxy(25, 6);
     scanf("%d", &employees[inx].id);
     gotoxy(25, 8);
     fflush(stdin);
     fgets(employees[inx].name, sizeof(employees[inx].name), stdin);
-    employees[inx].name[strcspn(employees[inx].name, "\n")] = 0;
+    employees[inx].name[strcspn(employees[inx].name, "\n")] = 0; // Remove newline character
     gotoxy(25, 10);
     scanf("%d", &employees[inx].age);
     gotoxy(25, 12);
@@ -247,43 +260,57 @@ void addEmployee(struct Employee *employees, int length)
     scanf("%f", &employees[inx].deduction);
 }
 
+// Function to clear an employee's data
 void clearEmployeeData(struct Employee *employee)
 {
     employee->id = 0;
-    strcpy(employee->name, "");
+    strcpy(employee->name, ""); // Clear name
     employee->age = 0;
-    employee->salary = 0;
-    employee->commission = 0;
-    employee->deduction = 0;
+    employee->salary = 0.0;
+    employee->commission = 0.0;
+    employee->deduction = 0.0;
 }
 
+// Function to delete all employees
 void deleteEmployees(struct Employee *employees, int length)
 {
-    for (int i = 0; i < length; i++)
+    char choice;
+    printf("Delete all employees? (y/n): ");
+    fflush(stdin);
+    choice = getche();
+    if (choice == 'y' || choice == 'Y')
     {
-        clearEmployeeData(&employees[i]);
+        for (int i = 0; i < length; i++)
+        {
+            clearEmployeeData(&employees[i]); // Clear each employee's data
+        }
+        printf("All employee data deleted.\n");
     }
-    printf("All employees have been successfully deleted.\n");
+    else
+    {
+        printf("Deletion cancelled.\n");
+    }
 }
 
+// Function to delete a specific employee by ID
 void deleteEmployee(struct Employee *employees, int length, int id)
 {
     for (int i = 0; i < length; i++)
     {
         if (employees[i].id == id)
-        {
-            clearEmployeeData(&employees[i]);
-            printf("Successfully deleted employee with ID %d.\n", id);
-            return;
+        {                                     // Check for matching ID
+            clearEmployeeData(&employees[i]); // Clear employee data
+            printf("Employee with ID %d deleted.\n", id);
+            return; // Exit after deletion
         }
     }
-    printf("Employee with ID %d not found.\n", id);
+    printf("Employee with ID %d not found.\n", id); // Error message if ID not found
 }
 
-// Main function
+// Main Function
 int main()
 {
-    struct Employee employees[10] = {0};
-    displayMenu(employees, sizeof(employees) / sizeof(employees[0]));
-    return 0;
+    struct Employee employees[100] = {0}; // Array to hold employee records
+    displayMenu(employees, 100);          // Start the menu display
+    return 0;                             // Indicate successful execution
 }
