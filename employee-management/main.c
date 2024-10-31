@@ -13,6 +13,8 @@
 #define HOME 71
 #define DOWN 80
 #define END 79
+#define LEFT 75
+#define RIGHT 77
 #define CLEAR system("cls") // Macro to clear the console screen
 
 // Struct Definitions
@@ -84,10 +86,12 @@ void displayMenu(struct Employee *employees, int length)
         {
         case EXTENDED: // Handle special key inputs
             ch = getch();
-            inx = (ch == UP) ? (inx == 0 ? 5 : inx - 1) : (ch == DOWN) ? (inx + 1) % 6
-                                                      : (ch == HOME)   ? 0
-                                                      : (ch == END)    ? 5
-                                                                       : inx;
+            inx = (ch == UP || ch == LEFT)      ? (inx == 0 ? 5 : inx - 1)
+                  : (ch == DOWN || ch == RIGHT) ? (inx + 1) % 6
+                  : (ch == HOME)                ? 0
+                  : (ch == END)                 ? 5
+                                                : inx;
+
             break;
 
         case ENTER:
