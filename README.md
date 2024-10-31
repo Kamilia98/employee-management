@@ -6,8 +6,10 @@ A simple C program for managing employee records, allowing users to add, display
 - Add Employee
 - Display All Employees
 - Display Employee by ID
+- Display Employee by Name
 - Delete All Employees
 - Delete Employee by ID
+- Delete Employee by Name
 
 ## Getting Started
 
