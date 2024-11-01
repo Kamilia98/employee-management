@@ -305,7 +305,7 @@ void addEmployee(struct Employee *employees, int length)
     }
 
     CLEAR;
-    gotoxy(18, 2);
+    gotoxy(17, 2);
     printf("=== Enter Employee Details ===");
 
     // Display input fields for employee details
@@ -399,16 +399,14 @@ void deleteEmployees(struct Employee *employees, int length)
     scanf("%c", &choice);
     if (choice == 'y' || choice == 'Y')
     {
-        int count++;
+        int count = 0;
         for (int i = 0; i < length; i++)
         {
-            if (employees[i] != 0)
+            if (employees[i].id != 0)
             {
-
+                count++;
                 clearEmployeeData(&employees[i]); // Clear each employee's data
             }
-            else
-                count++;
         }
         CLEAR;
         if (!count)
