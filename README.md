@@ -28,15 +28,13 @@ This program is contained in a single source file, which includes all the functi
 
 ### Compilation Example
 
-```
-bash
+```bash
 gcc employee_management.c -o employee_management
 ```
 
 ### Execution
 
-```
-bash
+```bash
 ./employee_management
 ```
 
