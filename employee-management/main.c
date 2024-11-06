@@ -15,6 +15,7 @@
 #define END 79
 #define LEFT 75
 #define RIGHT 77
+#define BACK 8
 #define CLEAR system("cls") // Macro to clear the console screen
 
 // Struct Definitions
@@ -32,6 +33,7 @@ struct Employee
 void displayMenu(struct Employee *employees, int length);
 void displayEmployees(struct Employee *employees, int length);
 void addEmployee(struct Employee *employees, int length);
+void getEmployeeData(struct Employee *employee);
 int getEmployeeId();
 char *getEmployeeName();
 int employeeExists(struct Employee *employees, int length, int id);
@@ -43,6 +45,7 @@ void deleteEmployeeByID(struct Employee *employees, int length, int id);
 void deleteEmployeeByName(struct Employee *employees, int length, char *name);
 void gotoxy(int column, int row); // Set cursor position
 void textattr(int i);             // Set text color
+char **MultipleLineEditor(int dataCount, int col, int row, int *types, int *sizes);
 
 // Function Implementations
 
@@ -150,6 +153,170 @@ void displayMenu(struct Employee *employees, int length)
             break;
         }
     } while (1);
+}
+
+// Function to capture multi-line user input based on data types and size constraints
+char **MultipleLineEditor(int dataCount, int col, int row, int *types, int *sizes)
+{
+    // Allocate memory for each input field and supporting pointers
+    char **arrs = (char **)malloc(dataCount * sizeof(char *));      // Stores user inputs
+    char **startptrs = (char **)malloc(dataCount * sizeof(char *)); // Start positions
+    char **currptrs = (char **)malloc(dataCount * sizeof(char *));  // Current cursor positions
+    char **lastptrs = (char **)malloc(dataCount * sizeof(char *));  // Last character positions
+
+    // Track cursor and editing positions for each input field
+    int *start = malloc(dataCount * sizeof(int)); // Initial column positions
+    int *curr = malloc(dataCount * sizeof(int));  // Current cursor positions
+    int *last = malloc(dataCount * sizeof(int));  // Last filled positions
+    int hasDecimalPoint = 0;                      // Track if a decimal point has been entered for float fields
+
+    // Initialize input fields and set up memory for each entry
+    for (int i = 0; i < dataCount; i++)
+    {
+        arrs[i] = (char *)malloc(sizes[i] * sizeof(char));  // Allocate memory per field size
+        memset(arrs[i], ' ', sizes[i]);                     // Fill each field with spaces
+        startptrs[i] = currptrs[i] = lastptrs[i] = arrs[i]; // Initialize all pointers to the start
+        start[i] = curr[i] = last[i] = col;                 // Set initial positions to start column
+    }
+
+    char ch;
+    int flag = 1;  // Flag to control loop
+    int dcurr = 0; // Current data entry index (used for navigation across fields)
+
+    do
+    {
+        gotoxy(curr[dcurr], row); // Move cursor to the current position
+        ch = getch();             // Get user input
+
+        // Handle various input cases
+        switch (ch)
+        {
+        case EXTENDED: // Handle extended (arrow) keys
+            ch = getch();
+            switch (ch)
+            {
+            case RIGHT: // Move cursor right if possible
+                if (currptrs[dcurr] < lastptrs[dcurr])
+                {
+                    currptrs[dcurr]++;
+                    curr[dcurr]++;
+                }
+                break;
+            case LEFT: // Move cursor left if possible
+                if (currptrs[dcurr] > startptrs[dcurr])
+                {
+                    currptrs[dcurr]--;
+                    curr[dcurr]--;
+                }
+                break;
+            case UP: // Navigate to the previous field
+                if (dcurr > 0)
+                {
+                    dcurr--;
+                    row -= 2; // Move row up by 2
+                    curr[dcurr] = currptrs[dcurr] - startptrs[dcurr] + col;
+                }
+                break;
+            case DOWN: // Navigate to the next field
+                if (dcurr < dataCount - 1)
+                {
+                    dcurr++;
+                    row += 2; // Move row down by 2
+                    curr[dcurr] = currptrs[dcurr] - startptrs[dcurr] + col;
+                }
+                break;
+            }
+            break;
+
+        case ENTER:
+        case ESC:                   // Exit the editor on ENTER or ESC
+            currptrs[dcurr] = '\0'; // Null-terminate current field
+            flag = 0;               // End the loop
+            break;
+
+        case BACK: // Handle backspace
+            if (currptrs[dcurr] > startptrs[dcurr])
+            {
+                // Reset decimal flag if decimal point is removed
+                if (*(currptrs[dcurr] - 1) == '.')
+                {
+                    hasDecimalPoint = 0;
+                }
+
+                // Remove last character, reset cursor, and display space to clear
+                currptrs[dcurr]--;
+                *currptrs[dcurr] = ' ';
+                curr[dcurr]--;
+                last[dcurr]--;
+                gotoxy(curr[dcurr], row);
+                printf(" ");
+                gotoxy(curr[dcurr], row); // Set cursor to the updated position
+            }
+            break;
+
+        default:
+            // Define acceptable key ranges based on field type
+            int startKey = 0, endKey = 127;
+            if (types[dcurr] == 0 || types[dcurr] == 1) // int or float
+            {
+                startKey = '0';
+                endKey = '9';
+            }
+            else if (types[dcurr] == 2) // string (lowercase letters)
+            {
+                startKey = 'a';
+                endKey = 'z';
+            }
+
+            // Check if the character is valid for the field type and within length limits
+            if (isprint(ch) &&
+                ((ch >= startKey && ch <= endKey) ||
+                 (types[dcurr] == 1 && ch == '.' && hasDecimalPoint == 0)))
+            {
+                // Allow decimal point for float type only once
+                if (ch == '.' && types[dcurr] == 1)
+                {
+                    hasDecimalPoint = 1;
+                }
+
+                // Add character to field if it fits within the size limit
+                if (currptrs[dcurr] < startptrs[dcurr] + sizes[dcurr] - 1)
+                {
+                    *currptrs[dcurr] = ch;
+                    printf("%c", ch); // Display the character
+                    currptrs[dcurr]++;
+                    curr[dcurr]++;
+                    if (currptrs[dcurr] > lastptrs[dcurr]) // Update last position if moved forward
+                    {
+                        lastptrs[dcurr]++;
+                        last[dcurr]++;
+                    }
+                }
+                else
+                {
+                    printf("\a"); // Beep if field size limit reached
+                }
+            }
+            break;
+        }
+
+    } while (flag);
+
+    // Null-terminate each input field after editing is complete
+    for (int i = 0; i < dataCount; i++)
+    {
+        *currptrs[i] = '\0';
+    }
+
+    // Free temporary memory allocations
+    free(start);
+    free(curr);
+    free(last);
+    free(startptrs);
+    free(currptrs);
+    free(lastptrs);
+
+    return arrs; // Return edited inputs
 }
 
 // Function to display all employees
@@ -304,79 +471,50 @@ void addEmployee(struct Employee *employees, int length)
             return;
     }
 
-    CLEAR;
-    gotoxy(17, 2);
-    printf("=== Enter Employee Details ===");
+    getEmployeeData(&employees[inx]);
+}
 
-    // Display input fields for employee details
-    gotoxy(10, 4);
-    printf("+----------------------------------------+");
-    gotoxy(10, 18);
-    printf("+----------------------------------------+");
+// Function to collect and stores employee data
+void getEmployeeData(struct Employee *e)
+{
+    CLEAR; // Clear the screen
+    gotoxy(3, 0);
+    printf("=== Enter Employee Details ==="); // Title for input section
 
-    // Prompt for employee details
-    gotoxy(12, 6);
+    // Display boundaries for the input fields
+    gotoxy(0, 1);
+    printf("+-----------------------------------+"); // Top boundary
+    gotoxy(0, 15);
+    printf("+-----------------------------------+\n"); // Bottom boundary
+
+    // Field labels for employee data entry
+    gotoxy(2, 3);
     printf("ID:");
-    gotoxy(12, 8);
+    gotoxy(2, 5);
     printf("Name:");
-    gotoxy(12, 10);
+    gotoxy(2, 7);
     printf("Age:");
-    gotoxy(12, 12);
+    gotoxy(2, 9);
     printf("Salary:");
-    gotoxy(12, 14);
+    gotoxy(2, 11);
     printf("Commission:");
-    gotoxy(12, 16);
+    gotoxy(2, 13);
     printf("Deduction:");
+    fflush(stdin); // Clear any leftover input
 
-    // Get employee ID from user input and check for uniqueness
-    int employeeID;
+    int types[6] = {0, 2, 0, 1, 1, 1};  // Field data types: 0=int, 1=float, 2=string
+    int sizes[6] = {5, 15, 3, 6, 6, 6}; // Field sizes for input constraints
 
-    // Loop until a valid unique ID is entered
-    do
-    {
-        // Prompt user for the employee ID
-        gotoxy(25, 6);
-        scanf("%d", &employeeID); // Use & to store input in the variable
+    // Collect input for each field using MultipleLineEditor
+    char **emp = MultipleLineEditor(6, 15, 3, types, sizes);
 
-        // Check if the entered ID already exists (not the same employee)
-        if (employeeExists(employees, length, employeeID) != -1 &&
-            employeeExists(employees, length, employeeID) != inx)
-        {
-            gotoxy(12, 7);
-            // Inform the user that the ID already exists
-            printf("ID %d already exists. Please enter a unique ID.\n", employeeID);
-
-            // Clear the ID input
-            gotoxy(25, 6);
-            printf("                    "); // Clear the input line by overwriting it with spaces
-
-            // Optionally, provide additional instructions or leave the cursor at the same position
-        }
-        else
-        {
-            // If the ID is unique or the same as the current employee's ID, assign it
-            employees[inx].id = employeeID;
-            gotoxy(12, 7);
-            // clear error message if exists
-            printf("                                              ");
-            break; // Exit the loop after a valid ID is entered
-        }
-    } while (1); // Keep looping until a valid unique ID is provided
-
-    // Get employee details from user input
-    gotoxy(25, 8);
-    fflush(stdin);
-    fgets(employees[inx].name, sizeof(employees[inx].name), stdin);
-    employees[inx].name[strcspn(employees[inx].name, "\n")] = 0; // Remove newline character
-    fflush(stdin);
-    gotoxy(25, 10);
-    scanf("%d", &employees[inx].age);
-    gotoxy(25, 12);
-    scanf("%f", &employees[inx].salary);
-    gotoxy(25, 14);
-    scanf("%f", &employees[inx].commission);
-    gotoxy(25, 16);
-    scanf("%f", &employees[inx].deduction);
+    // Store inputs in the Employee struct
+    e->id = atoi(emp[0]);
+    strcpy(e->name, emp[1]);
+    e->age = atoi(emp[2]);
+    e->salary = atof(emp[3]);
+    e->commission = atof(emp[4]);
+    e->deduction = atof(emp[5]);
 }
 
 // Function to clear an employee's data
