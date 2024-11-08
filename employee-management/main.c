@@ -70,6 +70,7 @@ void displayMenu(struct Employee *employees, int length)
     const char *menu[] = {"Add", "Display All", "Display By ID", "Display By Name", "Delete All", "Delete By ID", "Delete By Name", "Exit"};
     int inx = 0; // Index for the menu selection
     char ch;
+    int screenWidth = 28; //
 
     do
     {
@@ -82,9 +83,12 @@ void displayMenu(struct Employee *employees, int length)
         // Display menu options
         for (int i = 0; i < 8; i++)
         {
-            gotoxy(7, i * 2 + 3);
+            int itemWidth = strlen(menu[i]) + 6;         // Width of menu item including ">> <<" for selected
+            int padding = (screenWidth - itemWidth) / 2; // Calculate padding for centering
+            gotoxy(padding, i * 2 + 3);                  // Move cursor to start position with padding
+
             textattr(i == inx ? 14 : 7); // Highlight selected option
-            printf("%s %s", (i == inx) ? ">>" : "   ", menu[i]);
+            printf("%s %s %s", (i == inx) ? ">>" : "  ", menu[i], (i == inx) ? "<<" : "  ");
         }
 
         ch = getche(); // Get user input
@@ -229,9 +233,8 @@ char **MultipleLineEditor(int dataCount, int col, int row, int *types, int *size
             break;
 
         case ENTER:
-        case ESC:                   // Exit the editor on ENTER or ESC
-            currptrs[dcurr] = '\0'; // Null-terminate current field
-            flag = 0;               // End the loop
+        case ESC:     // Exit the editor on ENTER or ESC
+            flag = 0; // End the loop
             break;
 
         case BACK: // Handle backspace
@@ -305,8 +308,9 @@ char **MultipleLineEditor(int dataCount, int col, int row, int *types, int *size
     // Null-terminate each input field after editing is complete
     for (int i = 0; i < dataCount; i++)
     {
-        *currptrs[i] = '\0';
+        *(currptrs[i]) = '\0';
     }
+    getch();
 
     // Free temporary memory allocations
     free(start);
